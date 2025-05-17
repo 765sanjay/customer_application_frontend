@@ -1,0 +1,65 @@
+{
+    "professional":{
+        "profession_id": "155c03e8-e0eb-4fc8-92d2-71a83ea8db42",
+        "profession": "barber",
+        "description": "barber",
+        "service_area": "nnn",
+        "totalbookingcount": "11"
+    },
+    "booking":{
+        "booking_booking_id": "01e103b0-d8c2-4cb8-8866-f2382b385925",
+        "booking_userId": "42b39da4-e0cf-2d20-66b5-cfa614efb0c6",
+        "booking_service_id": "19db0d5f-9734-41e0-8d9c-4e6886f08b22",
+        "booking_booking_timestamp": "2025-01-16T16:41:37.825Z",
+        "booking_service_date_time": "2025-01-16T08:23:25.864Z",
+        "booking_status": "Cancelled",
+        "booking_payment_status": "Not Paid",
+        "booking_payment_method": null,
+        "booking_cancellation_reason": null,
+        "booking_payment": "1400.00",
+        "booking_profession_id": "857b533a-0d74-4a1e-b1bd-18d34dfdbac9",
+        "user_userId": "42b39da4-e0cf-2d20-66b5-cfa614efb0c6",
+        "user_name": "first",
+        "user_gmail": "first@mail.com",
+        "user_password": "$2a$12$qC0.CotndlHLterl7GupSOvYyObiChhlybba89Niu51J7PQ5ugp3i",
+        "user_date_of_birth": "1999-12-31T18:30:00.000Z",
+        "user_imgurl": null,
+        "user_mobileno": "7894652130",
+        "user_wtappNo": "7894652130",
+        "user_gender": "male",
+        "user_address_doorno": "01",
+        "user_address_street": "first street",
+        "user_address_city": "chn",
+        "user_address_state": "tn",
+        "user_address_pincode": "600044",
+        "user_usertype": "Customer",
+        "user_dateofjoining": "2025-01-15T18:30:00.000Z",
+        "user_fcm_token": "fPTqnw-gS1OutlYkapAR3Y:APA91bGRSrSKmU4MpvQkw4ONID8aiFM-Lxx7p4fSmRvrZ1K4eSDQfynkalI0dLjxi13rSzYSqshyq06hAXmgyhw3YgWJzvIPwTOrrKbDz2Y39YkP51XumUo",
+        "service_service_id": "19db0d5f-9734-41e0-8d9c-4e6886f08b22",
+        "service_profession_id": "155c03e8-e0eb-4fc8-92d2-71a83ea8db42",
+        "service_service_name": "Plumbing",
+        "service_service_description": "Js",
+        "service_price_range_start": "50.00",
+        "service_price_range_end": "500.00",
+        "service_main_tags": [
+            "hello"
+        ],
+        "service_sub_tags": [
+            "hello"
+        ]
+    },
+    "service":{
+        "service_id": "19db0d5f-9734-41e0-8d9c-4e6886f08b22",
+        "profession_id": "155c03e8-e0eb-4fc8-92d2-71a83ea8db42",
+        "service_name": "Plumbing",
+        "service_description": "Js",
+        "price_range_start": "50.00",
+        "price_range_end": "500.00",
+        "main_tags": [
+            "hello"
+        ],
+        "sub_tags": [
+            "hello"
+        ]
+    }
+}
