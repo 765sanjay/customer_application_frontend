@@ -136,20 +136,26 @@ class Footer extends StatelessWidget {
   }
 
   // Helper method to build a link
-  Widget _buildLink(String text) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.0),
-      child: TextButton(
-        onPressed: () {
-          // Handle link tap
-        },
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.grey[600],
+   Widget _buildLink(String text) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          title: Text(
+            text,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[700],
+            ),
           ),
+          trailing: Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+          onTap: () {
+            // Handle link tap
+          },
         ),
-      ),
+        Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+      ],
     );
   }
 

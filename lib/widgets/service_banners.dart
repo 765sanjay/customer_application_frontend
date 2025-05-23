@@ -12,39 +12,6 @@ class ServiceBanners extends StatefulWidget {
 
 }
 
-const BANNER_SLIDES = [
-  {
-    "id": 1,
-    "title": "Special Launch Offer",
-    "description": "Get 50% off on your first service booking",
-    "image": "https://images.unsplash.com/photo-1518770660439-4636190af475"
-  },
-  {
-    "id": 2,
-    "title": "Premium Services",
-    "description": "Book certified professionals today",
-    "image": "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
-  },
-  {
-    "id": 3,
-    "title": "Home Services",
-    "description": "Expert solutions at your doorstep",
-    "image": "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d"
-  },
-  {
-    "id": 4,
-    "title": "Festival Deals",
-    "description": "Exclusive offers on all services",
-    "image": "https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
-  },
-  {
-    "id": 5,
-    "title": "New User Benefits",
-    "description": "Extra 20% off on your first 3 bookings",
-    "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035"
-  }
-];
-
 class _ServiceBannersState extends State<ServiceBanners> {
   int currentSlide = 0;
   Timer? timer;
@@ -66,22 +33,6 @@ class _ServiceBannersState extends State<ServiceBanners> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    timer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      setState(() {
-        currentSlide = (currentSlide + 1) % BANNER_SLIDES.length;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
 
     final provider = Provider.of<HomePageProvider>(context);
@@ -89,26 +40,91 @@ class _ServiceBannersState extends State<ServiceBanners> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Banner Slider
-          AspectRatio(
-            aspectRatio: 21 / 9,
+            // Replace your AspectRatio widget with this Container
+          Container(
+            height: 180, // Fixed height for the banner
+            width: double.infinity,
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Stack(
-              children: BANNER_SLIDES.asMap().entries.map((entry) {
-                int index = entry.key;
-                var slide = entry.value;
-                return AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  opacity: index == currentSlide ? 1.0 : 0.0,
-                  child: Image.network(
-                    slide['image'] as String,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
+              children: [
+                // Background Image with dark overlay
+                Positioned.fill(
+                  child: ColorFiltered(
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(0.4),
+                      BlendMode.darken,
+                    ),
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1518770660439-4636190af475',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(color: Colors.blue.shade500);
+                      },
+                    ),
                   ),
-                );
-              }).toList(),
+                ),
+
+                // Foreground Content
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade600,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'FLAT150OFF',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12), // Reduced from 20
+                      Text(
+                        'Special Launch Offer',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22, // Reduced from 24
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 10,
+                              color: Colors.black.withOpacity(0.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6), // Reduced from 8
+                      Text(
+                        'Get 50% off on first booking',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14, // Reduced from 16
+                          shadows: [
+                            Shadow(
+                              blurRadius: 10,
+                              color: Colors.black.withOpacity(0.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-
           // Personal Care Section
           buildServiceSection('Personal Care', provider.personal_care),
 

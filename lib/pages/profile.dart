@@ -9,6 +9,7 @@ import 'package:sklyit/pages/login.dart';
 import 'package:sklyit/api/user-data.dart';
 import '../widgets/ListTile_style.dart';
 import '../widgets/footer.dart';
+import 'package:sklyit/pages/EditProfilePage.dart';
 
 class ProfilePage extends StatefulWidget {
   ProfilePage();
@@ -28,12 +29,14 @@ class _ProfilePageState extends State<ProfilePage> {
   String referralCode = "SKLY123"; // Example referral code
 
   // Preferences
-  bool locationBasedRecommendations = UserUtils.preferences?['locationBasedRecommendations'] as bool? ?? true;
+  bool locationBasedRecommendations =
+      UserUtils.preferences?['locationBasedRecommendations'] as bool? ?? true;
   ThemeMode selectedTheme = ThemeMode.values.firstWhere(
-        (e) => e.toString() == 'ThemeMode.${UserUtils.preferences?['theme']}',
+    (e) => e.toString() == 'ThemeMode.${UserUtils.preferences?['theme']}',
     orElse: () => ThemeMode.system,
   );
-  bool emailNotifications = UserUtils.preferences?['emailNotifications'] as bool? ?? true;
+  bool emailNotifications =
+      UserUtils.preferences?['emailNotifications'] as bool? ?? true;
   bool pushNotifications = false;
 
   final ImagePicker _picker = ImagePicker();
@@ -48,14 +51,15 @@ class _ProfilePageState extends State<ProfilePage> {
         email = UserUtils.user?['gmail'] ?? 'No Email';
         phoneNumber = UserUtils.user?['mobileno'] ?? 'No Phone';
       });
-    });// Placeholder image initially
+    }); // Placeholder image initially
   }
 
   // Pick avatar function (placeholder for now)
 
   // Function to pick image from gallery
   Future<void> _pickAvatar() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
@@ -123,191 +127,355 @@ class _ProfilePageState extends State<ProfilePage> {
       'theme': selectedTheme.name,
       'emailNotifications': emailNotifications,
     });
+  }
 
+  void _navigateToEditProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfilePage(
+          userName: userName,
+          email: email,
+          phoneNumber: phoneNumber,
+          onSave: (newName, newEmail, newPhone) {
+            setState(() {
+              userName = newName;
+              email = newEmail;
+              phoneNumber = newPhone;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Profile"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.exit_to_app),
-            onPressed: _logout,
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   title: Text("Profile"),
+      //   actions: [
+      //     IconButton(
+      //       icon: Icon(Icons.exit_to_app),
+      //       onPressed: _logout,
+      //     ),
+      //   ],
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Editable Avatar
-            Center(
-              child: GestureDetector(
-                onTap: _pickAvatar,
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: (UserUtils.user?["imgurl"] != null) ? NetworkImage(UserUtils.user?["imgurl"]) : AssetImage(avatarUrl),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Row(
+                children: [
+                  // Avatar
+                  Padding(
+                  padding: EdgeInsets.only(right: 30),
+                  child : GestureDetector(
+                    onTap: _pickAvatar,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: (UserUtils.user?["imgurl"] != null)
+                              ? NetworkImage(UserUtils.user?["imgurl"])
+                              : AssetImage(avatarUrl) as ImageProvider,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: Color(0xfff4c345),
+                            child: Icon(
+                              Icons.camera_alt,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        radius: 15,
-                        backgroundColor: Colors.blue,
-                        child: Icon(
-                          Icons.camera_alt,
-                          size: 18,
+                  ),
+                  ),
+                  // Editable Avatar
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          phoneNumber,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Edit Icon
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Color(0xfff4c345)),
+                    onPressed: _navigateToEditProfile,
+                  ),
+                  
+                ],
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+// Preferences Section - Updated design
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Preferences',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Location-Based Recommendations'),
+                    value: locationBasedRecommendations,
+                    onChanged: (bool value) {
+                      setState(() {
+                        locationBasedRecommendations = value;
+                      });
+                      _savePreferences();
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('App Theme'),
+                    trailing: DropdownButton<ThemeMode>(
+                      value: selectedTheme,
+                      items: [
+                        DropdownMenuItem(
+                          child: Text('Light'),
+                          value: ThemeMode.light,
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Dark'),
+                          value: ThemeMode.dark,
+                        ),
+                        DropdownMenuItem(
+                          child: Text('System Default'),
+                          value: ThemeMode.system,
+                        ),
+                      ],
+                      onChanged: (ThemeMode? value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedTheme = value;
+                          });
+                          _savePreferences();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Notification Settings Section - Updated design
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Notification Settings',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Email Notifications'),
+                    value: emailNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        emailNotifications = value;
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Push Notifications'),
+                    value: pushNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        pushNotifications = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Wallet Management Section - Updated design
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Wallet Management',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.account_balance_wallet),
+                    title: Text("Wallet Balance"),
+                    subtitle: Text("\$${walletBalance.toStringAsFixed(2)}"),
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Add Funds clicked')),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xfff4c345),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
+                        child: Text(
+                          "Add Funds",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Withdraw clicked')),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xfff4c345),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
+                        child: Text(
+                          "Withdraw",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            //Divider(height: 30, thickness: 2),
+
+            // Refer and Earn Section
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100], // Light background color
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.card_giftcard, color: Colors.black87),
+                      SizedBox(width: 8),
+                      Text(
+                        "Refer & Earn",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    "Get \$100 when your friend completes their first booking",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Referral code shared!')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xfff4c345),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        "Refer now",
+                        style: TextStyle(
                           color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            // Profile Details (Non-editable Name and Email)
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text("Name"),
-              subtitle: Text(userName),
-            ),
-            ListTile(
-              leading: Icon(Icons.email),
-              title: Text("Email"),
-              subtitle: Text(email),
-            ),
-            ListTile(
-              leading: Icon(Icons.phone),
-              title: Text("Phone"),
-              subtitle: Text(phoneNumber),
-            ),
-
-            Divider(height: 30, thickness: 2),
-
-            // Preferences Section
-            _SectionHeader(title: 'Preferences'),
-
-            SwitchListTile(
-              title: Text('Location-Based Recommendations'),
-              value: locationBasedRecommendations,
-              onChanged: (bool value) {
-                setState(() {
-                  locationBasedRecommendations = value;
-                });
-                _savePreferences();
-              },
-            ),
-            ListTile(
-              title: Text('App Theme'),
-              trailing: DropdownButton<ThemeMode>(
-                value: selectedTheme,
-                items: [
-                  DropdownMenuItem(
-                    child: Text('Light'),
-                    value: ThemeMode.light,
-                  ),
-                  DropdownMenuItem(
-                    child: Text('Dark'),
-                    value: ThemeMode.dark,
-                  ),
-                  DropdownMenuItem(
-                    child: Text('System Default'),
-                    value: ThemeMode.system,
                   ),
                 ],
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    setState(() {
-                      selectedTheme = value;
-                    });
-                    _savePreferences();
-                  }
-                },
-              ),
-            ),
-
-
-            Divider(height: 30, thickness: 2),
-
-            // Notification Settings Section
-            _SectionHeader(title: 'Notification Settings'),
-            SwitchListTile(
-              title: Text('Email Notifications'),
-              value: emailNotifications,
-              onChanged: (bool value) {
-                setState(() {
-                  emailNotifications = value;
-                });
-                // Optionally save notification settings here
-              },
-            ),
-            SwitchListTile(
-              title: Text('Push Notifications'),
-              value: pushNotifications,
-              onChanged: (bool value) {
-                setState(() {
-                  pushNotifications = value;
-                });
-                // Optionally save notification settings here
-              },
-            ),
-
-            Divider(height: 30, thickness: 2),
-
-            // Wallet Management Section
-            _SectionHeader(title: 'Wallet Management'),
-            ListTile(
-              leading: Icon(Icons.account_balance_wallet),
-              title: Text("Wallet Balance"),
-              subtitle: Text("\$${walletBalance.toStringAsFixed(2)}"),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // Implement Add Funds logic
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Add Funds clicked')),
-                    );
-                  },
-                  child: Text("Add Funds"),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Implement Withdraw logic
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Withdraw clicked')),
-                    );
-                  },
-                  child: Text("Withdraw"),
-                ),
-              ],
-            ),
-
-            Divider(height: 30, thickness: 2),
-
-            // Refer and Earn Section
-            _SectionHeader(title: 'Refer & Earn'),
-            ListTile(
-              leading: Icon(Icons.card_giftcard),
-              title: Text("Referral Code"),
-              subtitle: Text(referralCode),
-              trailing: IconButton(
-                icon: Icon(Icons.share),
-                onPressed: () {
-                  // Implement share referral code functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Referral code shared!')),
-                  );
-                },
               ),
             ),
             // Placeholder for tracking referral rewards
@@ -320,50 +488,114 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
 
-            Divider(height: 30, thickness: 2),
+            //Divider(height: 30, thickness: 2),
 
             // Offers and Updates Section
-            _SectionHeader(title: 'Offers & Coupons'),
-            ListTile(
-              leading: Icon(Icons.local_offer),
-              title: Text("Exclusive Offer"),
-              subtitle: Text("20% off on AC Servicing"),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  // Implement redeem offer functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Offer redeemed!')),
-                  );
-                },
-                child: Text("Redeem"),
+            // Offers and Updates Section - Updated design
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Offers & Coupons',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.local_offer, color: Color(0xfff4c345)),
+                    title: Text(
+                      "Exclusive Offer",
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text("20% off on AC Servicing"),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Offer redeemed!')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xfff4c345),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      child: Text(
+                        "Redeem",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading:
+                        Icon(Icons.card_giftcard, color: Color(0xfff4c345)),
+                    title: Text(
+                      "New Coupon",
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text("Buy 1 Get 1 Free on Haircuts"),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Coupon redeemed!')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xfff4c345),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      child: Text(
+                        "Redeem",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.card_giftcard),
-              title: Text("New Coupon"),
-              subtitle: Text("Buy 1 Get 1 Free on Haircuts"),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  // Implement redeem coupon functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Coupon redeemed!')),
-                  );
-                },
-                child: Text("Redeem"),
-              ),
-            ),
+            SizedBox(height: 16),
 
-            Divider(height: 30, thickness: 2),
+            //Divider(height: 30, thickness: 2),
 
             // Logout Button
             SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 onPressed: _logout,
-                child: Text("Logout"),
+                child: Text(
+                  "Logout",
+                  style: TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.white,
                   minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    side: BorderSide(
+                      color: Colors.black, // Black border color
+                      width: 1.0, // Border width
+                    ),
+                  ),
                 ),
               ),
             ),

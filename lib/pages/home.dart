@@ -7,79 +7,82 @@ import 'package:sklyit/widgets/service_banners.dart';
 import '../providers/home_page_provider.dart';
 
 class Home extends StatefulWidget {
-  Home({super.key, required this.search});
-
+  const Home({super.key, required this.search});
   final VoidCallback search;
 
   @override
-  _HomeState createState() => _HomeState();
+  State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  ScrollController _scrollController = ScrollController();
+  double _sheetExtent = 0.25; // initial value
 
   @override
   void initState() {
     super.initState();
-    _scrollController
-      .addListener(() {
-        if (_scrollController.offset > 200) {
-          Provider.of<HomePageProvider>(context, listen: false).setInitial(false);
-        }
-      });
     Provider.of<HomePageProvider>(context, listen: false).reload();
   }
 
   @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<HomePageProvider>(context);
-
     return Scaffold(
-      
       body: Stack(
         children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  if (provider.isInitial)
-                    Container(
-                      height: 200,
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "Your Gateway to Local Businesses",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  const SizedBox(height: 70),
-                  
-                  DomainIcons(),
-                  ServiceBanners(),
-                ],
-              ),
+          /// Background: only shows DomainIcons with fade based on extent
+          Positioned.fill(
+            child: Column(
+              children: [
+                const SizedBox(height: 120),
+                AnimatedOpacity(
+                  opacity: _sheetExtent < 0.3 ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: DomainIcons(),
+                ),
+              ],
             ),
           ),
+
+          /// Draggable sheet overlays the icons
+          DraggableScrollableSheet(
+            initialChildSize: 0.25,
+            minChildSize: 0.25,
+            maxChildSize: 0.9,
+            builder: (context, scrollController) {
+              return NotificationListener<DraggableScrollableNotification>(
+                onNotification: (notification) {
+                  setState(() {
+                    _sheetExtent = notification.extent;
+                  });
+                  return true;
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                  ),
+                  child: ListView(
+                    controller: scrollController,
+                    children:[
+                      ServiceBanners(),
+                      SizedBox(height: 16),
+                      // Add more widgets if needed
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          /// Search bar
           Positioned(
-            top: provider.isInitial ? (_scrollController.hasClients ? (200 - _scrollController.offset) : 200) : 0,
+            top: 0,
             left: 0,
             right: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withOpacity(0.95),
               child: Column(
                 children: [
                   Search(search: widget.search),
@@ -109,31 +112,25 @@ class CustomerDashboardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<HomePageProvider>(context);
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SectionTitle(context: context, title: 'Highlights'),
-              const Spacer(),
-            ],
-          ),
-          SizedBox(
-            height: 185,
-            child: PageView(
-              scrollDirection: Axis.horizontal,
-              children: provider.highlights.map((e) => ProductCard(business: e)).toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SectionTitle(context: context, title: 'Top Businesses'),
-          SizedBox(
-            height: 350,
-            child: BusinessCategoryWidget(topServices: provider.topServices),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SectionTitle(context: context, title: 'Highlights'),
+            const Spacer(),
+          ],
+        ),
+        Row(
+          children: provider.highlights
+              .take(2)
+              .map((e) => Expanded(child: ProductCard(business: e)))
+              .toList(),
+        ),
+        const SizedBox(height: 16),
+        SectionTitle(context: context, title: 'Top Businesses'),
+        BusinessCategoryWidget(topServices: provider.topServices),
+      ],
     );
   }
 }
@@ -216,67 +213,58 @@ class _BusinessCategoryWidgetState extends State<BusinessCategoryWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 90,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedCategory = category['title'];
-                    filteredServices = provider.topServices
-                        .where((element) => element['BusinessMainTags']!.contains(selectedCategory) || element['BusinessSubTags']!.contains(selectedCategory))
-                        .toList();
-                  });
-                },
-                child: SizedBox(
-                  width: 120,
-                  child: Card(
-                    color: (selectedCategory == category['title'])
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).cardTheme.color,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(category['icon'], size: 40),
-                        const SizedBox(height: 4),
-                        Text(
-                          category['title'],
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+        Wrap(
+          spacing: 8.0,
+          children: categories.map((category) {
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedCategory = category['title'];
+                  filteredServices = provider.topServices
+                      .where((element) =>
+                          element['BusinessMainTags']!
+                              .contains(selectedCategory) ||
+                          element['BusinessSubTags']!
+                              .contains(selectedCategory))
+                      .toList();
+                });
+              },
+              child: SizedBox(
+                width: 120,
+                child: Card(
+                  color: (selectedCategory == category['title'])
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).cardTheme.color,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(category['icon'], size: 40),
+                      const SizedBox(height: 4),
+                      Text(
+                        category['title'],
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
+              ),
+            );
+          }).toList(),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            "$selectedCategory Providers",
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
-        ...[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              "$selectedCategory Providers",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 185,
-            child: PageView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: filteredServices.length,
-              itemBuilder: (context, index) {
-                final business = filteredServices.toList()[index];
-                return ProductCard(business: business);
-              },
-            ),
-          ),
-        ],
+        Row(
+          children: filteredServices
+              .take(2)
+              .map((business) =>
+                  Expanded(child: ProductCard(business: business)))
+              .toList(),
+        ),
       ],
     );
   }

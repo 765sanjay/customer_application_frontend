@@ -16,7 +16,7 @@ class UserUtils {
 
   static String? avatarPath;
 
-  static const baseUrl = 'http://192.168.162.23:3000';
+  static const baseUrl = 'http://192.168.154.119:3000';
   static String? jwt;
   static String? jwtRefresh;
 
@@ -24,11 +24,12 @@ class UserUtils {
   static Map<String, dynamic>? user;
 
   static Timer? _refreshTimer;
-  
+
   static FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   // Save login status
-  static Future<void> saveLoginStatus(bool isLoggedIn, String? jwtAccessToken, String? jwtRefreshToken ) async {
+  static Future<void> saveLoginStatus(
+      bool isLoggedIn, String? jwtAccessToken, String? jwtRefreshToken) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool(_keyIsLoggedIn, isLoggedIn);
     await _storage.write(key: keyJwt, value: jwtAccessToken);
@@ -41,16 +42,18 @@ class UserUtils {
     var up = (await getUserPreferences());
     preferences = jsonDecode(up.body);
     var ud = (await getUserDetails());
-    
+
     user = jsonDecode(ud.body);
   }
 
   // Check if user is logged in
   static Future<bool> isLoggedIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool(_keyIsLoggedIn) ?? false; // Default is false if no value
-    if(isLoggedIn) {
-      _refreshTimer = Timer.periodic(Duration(seconds: 14 * 60 + 45), (timer) async {
+    bool isLoggedIn =
+        prefs.getBool(_keyIsLoggedIn) ?? false; // Default is false if no value
+    if (isLoggedIn) {
+      _refreshTimer =
+          Timer.periodic(Duration(seconds: 14 * 60 + 45), (timer) async {
         await RefreshAPIService().isAccessValid();
       });
       jwt = await getJwt();

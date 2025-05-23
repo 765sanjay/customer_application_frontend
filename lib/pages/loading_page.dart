@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:provider/provider.dart';
 import 'package:sklyit/providers/home_page_provider.dart';
 import '../providers/loading_state_provider.dart';
@@ -47,88 +46,34 @@ class _LoadingPageState extends State<LoadingPage>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background with animated scaling effect
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: Image.asset(
-                    'assets/images/preload.jpeg',
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
-            ),
-          ),
-          // Overlay for gradient effect
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.5),
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.5),
+  @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Image.asset(
+            'assets/images/preload.jpeg',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // This will show if the image fails to load
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error, color: Colors.red, size: 50),
+                    Text('Failed to load image', style: TextStyle(fontSize: 16)),
+                    Text('Path: assets/images/preload.jpeg', style: TextStyle(fontSize: 12)),
                   ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
                 ),
-              ),
-            ),
+              );
+            },
           ),
-          // Loading content
-          Positioned(
-            bottom: MediaQuery.of(context).size.height / 8,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Custom animated progress indicator
-                SizedBox(
-                  width: 50,
-                  height: 50,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 6,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ),
-                SizedBox(height: 20),
-                // Animated text
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: DefaultTextStyle(
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'Parkinsans',
-                    ),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: AnimatedTextKit(
-                        animatedTexts: [
-                          TypewriterAnimatedText(
-                            'Getting Things Ready...',
-                            speed: Duration(milliseconds: 100),
-                          ),
-                        ],
-                        repeatForever: false,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 }
