@@ -16,7 +16,7 @@ class UserUtils {
 
   static String? avatarPath;
 
-  static const baseUrl = 'http://192.168.154.119:3000';
+  static const baseUrl = 'http://192.168.1.6:3000';
   static String? jwt;
   static String? jwtRefresh;
 
