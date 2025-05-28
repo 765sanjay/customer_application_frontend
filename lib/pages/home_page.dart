@@ -9,6 +9,7 @@ import 'package:sklyit/screens/chat_screen/chat_dashboard.dart';
 import 'package:sklyit/pages/profile.dart';
 import 'package:sklyit/pages/recents.dart';
 import 'package:sklyit/utils/user_utils.dart';
+import 'package:sklyit/flash/main.dart' as flash;
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -19,29 +20,46 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int currentPageIndex = 2;
+  late Widget currentBody;
+  late List<Widget> pages;
 
   @override
-  Widget build(BuildContext context) {
-    Widget currentBody;
-    List<Widget> pages = [];
+  void initState() {
+    super.initState();
+    _initializePages();
+  }
 
-    void search() => setState(() {
-          currentPageIndex = 0;
-          currentBody = pages.elementAt(currentPageIndex);
-        });
-
+  void _initializePages() {
     pages = [
       ExplorePage(),
       HistoryPage(),
       Home(
-        search: search,
+        search: () => setState(() {
+          currentPageIndex = 0;
+          currentBody = pages.elementAt(currentPageIndex);
+        }),
       ),
       SavedBusinessesPage(),
+      const Center(child: Text('Flash')),
       ProfilePage(),
     ];
-
     currentBody = pages.elementAt(currentPageIndex);
-    
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args != null && args is int) {
+      setState(() {
+        currentPageIndex = args;
+        currentBody = pages.elementAt(currentPageIndex);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final style = TextButton.styleFrom(
       foregroundColor: Theme.of(context).colorScheme.primary,
     );
@@ -79,10 +97,19 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       bottomNavigationBar: CurvedNavigationBar(
         onTap: (int index) {
-          setState(() {
-            currentPageIndex = index;
-            currentBody = pages.elementAt(currentPageIndex);
-          });
+          if (index == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => flash.MyApp(),
+              ),
+            );
+          } else {
+            setState(() {
+              currentPageIndex = index;
+              currentBody = pages.elementAt(currentPageIndex);
+            });
+          }
         },
         backgroundColor: Theme.of(context).colorScheme.secondary,
         buttonBackgroundColor: Theme.of(context).colorScheme.primary,
@@ -94,13 +121,17 @@ class _MyHomePageState extends State<MyHomePage> {
           CurvedNavigationBarItem(
               child: Icon(Icons.history_outlined),
               label: ''),
-              CurvedNavigationBarItem(
+          CurvedNavigationBarItem(
             child: Icon(Icons.home_outlined),
             label: '',
           ),
           CurvedNavigationBarItem(
               child: Icon(Icons.star_border),
               label: ''),
+          CurvedNavigationBarItem(
+            child: Icon(Icons.flash_on_rounded),
+            label: '',
+          ),
           CurvedNavigationBarItem(
             child: Icon(Icons.person), 
             label: ''
