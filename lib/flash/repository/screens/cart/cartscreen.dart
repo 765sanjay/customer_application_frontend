@@ -5,7 +5,12 @@ import '../../widgets/uihelper.dart';
 import '../../app_header.dart';
 import '../checkout/checkout_screen.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
+  @override
+  _CartScreenState createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
   TextEditingController searchController = TextEditingController();
 
   // Color palette
@@ -14,6 +19,15 @@ class CartScreen extends StatelessWidget {
   final Color accentColor = const Color(0xFFF6C445);
   final Color darkAccent = const Color(0xFF006B7C);
   final Color lightAccent = const Color(0xFFFDD90D);
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch cart data when screen loads
+    Future.microtask(() => 
+      Provider.of<CartProvider>(context, listen: false).fetchCart()
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +41,61 @@ class CartScreen extends StatelessWidget {
           // Cart Content
           Expanded(
             child: Consumer<CartProvider>(
-              builder: (ctx, cart, child) => cart.items.isEmpty
-                  ? _buildEmptyCart(context)
-                  : _buildCartItems(cart, context),
+              builder: (ctx, cart, child) {
+                if (cart.isLoading) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: primaryColor,
+                    ),
+                  );
+                }
+
+                if (cart.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red[400],
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Error Loading Cart',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[800],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          cart.error!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => cart.fetchCart(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return cart.items.isEmpty
+                    ? _buildEmptyCart(context)
+                    : _buildCartItems(cart, context);
+              },
             ),
           ),
         ],

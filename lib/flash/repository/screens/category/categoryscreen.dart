@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import "../category/productpage.dart";
 
 class CategoryScreen extends StatefulWidget {
+  final String businessId;
+
+  const CategoryScreen({
+    Key? key,
+    required this.businessId,
+  }) : super(key: key);
+
   @override
   _CategoryScreenState createState() => _CategoryScreenState();
 }
@@ -440,6 +447,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _navigateToProducts(String category) {
+    // Default coordinates for testing - replace with actual location service
+    const defaultLatitude = 28.6139;  // Example: New Delhi coordinates
+    const defaultLongitude = 77.2090;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -449,7 +460,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
           secondaryColor: secondaryColor,
           accentColor: accentColor,
           darkAccent: darkAccent,
-          lightAccent: lightAccent, subcategories: [],
+          lightAccent: lightAccent,
+          subcategories: [],
+          businessId: widget.businessId,
+          latitude: defaultLatitude,
+          longitude: defaultLongitude,
         ),
       ),
     );

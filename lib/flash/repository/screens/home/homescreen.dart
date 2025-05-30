@@ -48,6 +48,10 @@ class _HomeScreenState extends State<HomeScreen> {
     {"img": "image 45.png", "text": "Biscuits & \nBakery", "color": Color(0xFFFDD90D)}
   ];
 
+  get defaultLatitude => null;
+
+  get defaultLongitude => null;
+
   @override
   void dispose() {
     searchController.dispose();
@@ -427,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
           secondaryColor: secondaryColor,
           accentColor: accentColor,
           darkAccent: darkAccent,
-          lightAccent: lightAccent, subcategories: [],
+          lightAccent: lightAccent, subcategories: [], businessId: '', latitude: defaultLatitude, longitude: defaultLongitude,
         ),
       ),
     );

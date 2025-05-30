@@ -61,7 +61,7 @@ class _BottomNavScreenState extends State<BottomNavScreen>
       builder: (context, toggleProvider, child) {
         final List<Widget> pages = [
           toggleProvider.isSklyFlashSelected ? HomeScreen() : MarkatHome(),
-          toggleProvider.isSklyFlashSelected ? CategoryScreen() : MarketCategoryPage(),
+          toggleProvider.isSklyFlashSelected ? CategoryScreen(businessId: '',) : MarketCategoryPage(),
           CartScreen(),
           OrderHistoryPage(),
         ];
