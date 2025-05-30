@@ -1,10 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:sklyit/flash/repository/color_palete/color_palete.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class OrderDetails extends StatelessWidget {
+class OrderDetails extends StatefulWidget {
   final Map<String, dynamic> order;
 
   const OrderDetails({Key? key, required this.order}) : super(key: key);
+
+  @override
+  State<OrderDetails> createState() => _OrderDetailsState();
+}
+
+class _OrderDetailsState extends State<OrderDetails> {
+  bool isLoading = false;
+  String? error;
+
+  Future<void> _reorder() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      // TODO: Implement reorder functionality
+      // This would typically involve creating a new order with the same items
+      await Future.delayed(Duration(seconds: 1)); // Simulated delay
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order placed successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      Navigator.pop(context); // Return to order history
+    } catch (e) {
+      setState(() {
+        error = 'Failed to reorder: $e';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to place order'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,15 +127,15 @@ class OrderDetails extends StatelessWidget {
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: order['status'] == 'Delivered'
+                          color: widget.order['status'] == 'Delivered'
                               ? Colors.green.withOpacity(0.1)
                               : Colors.orange.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          order['status'],
+                          widget.order['status'],
                           style: TextStyle(
-                            color: order['status'] == 'Delivered'
+                            color: widget.order['status'] == 'Delivered'
                                 ? Colors.green
                                 : Colors.orange,
                             fontWeight: FontWeight.bold,
@@ -100,7 +146,7 @@ class OrderDetails extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Order #${order['orderId']}',
+                    'Order #${widget.order['orderId']}',
                     style: TextStyle(
                       color: ColorPalette.secondaryColor.withOpacity(0.6),
                       fontSize: 14,
@@ -108,7 +154,7 @@ class OrderDetails extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Placed on ${order['orderPlacedAt']}',
+                    'Placed on ${widget.order['orderPlacedAt']}',
                     style: TextStyle(
                       color: ColorPalette.secondaryColor.withOpacity(0.6),
                       fontSize: 14,
@@ -122,10 +168,10 @@ class OrderDetails extends StatelessWidget {
             _buildSection(
               'Delivery Information',
               [
-                _buildInfoRow(Icons.location_on, 'Delivery Address', order['deliveryAddress']),
-                _buildInfoRow(Icons.access_time, 'Delivery Time', order['deliveryTime']),
-                _buildInfoRow(Icons.person, 'Delivery Partner', order['deliveryPartner']),
-                _buildInfoRow(Icons.phone, 'Partner Phone', order['deliveryPartnerPhone']),
+                _buildInfoRow(Icons.location_on, 'Delivery Address', widget.order['deliveryAddress']),
+                _buildInfoRow(Icons.access_time, 'Delivery Time', widget.order['deliveryTime']),
+                _buildInfoRow(Icons.person, 'Delivery Partner', widget.order['deliveryPartner']),
+                _buildInfoRow(Icons.phone, 'Partner Phone', widget.order['deliveryPartnerPhone']),
               ],
             ),
 
@@ -133,7 +179,7 @@ class OrderDetails extends StatelessWidget {
             _buildSection(
               'Order Items',
               [
-                ...order['items'].map<Widget>((item) => Padding(
+                ...(widget.order['items'] as List).map<Widget>((item) => Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: [
@@ -191,17 +237,17 @@ class OrderDetails extends StatelessWidget {
             _buildSection(
               'Payment Information',
               [
-                _buildInfoRow(Icons.payment, 'Payment Method', order['paymentMethod']),
-                _buildInfoRow(Icons.receipt, 'Subtotal', '₹${order['subtotal']}'),
-                _buildInfoRow(Icons.local_shipping, 'Delivery Fee', '₹${order['deliveryFee']}'),
-                if (order['discount'] > 0)
-                  _buildInfoRow(Icons.discount, 'Discount', '-₹${order['discount']}'),
-                _buildInfoRow(Icons.calculate, 'Tax', '₹${order['tax']}'),
+                _buildInfoRow(Icons.payment, 'Payment Method', widget.order['paymentMethod']),
+                _buildInfoRow(Icons.receipt, 'Subtotal', '₹${widget.order['subtotal']}'),
+                _buildInfoRow(Icons.local_shipping, 'Delivery Fee', '₹${widget.order['deliveryFee']}'),
+                if (widget.order['discount'] > 0)
+                  _buildInfoRow(Icons.discount, 'Discount', '-₹${widget.order['discount']}'),
+                _buildInfoRow(Icons.calculate, 'Tax', '₹${widget.order['tax']}'),
                 Divider(),
                 _buildInfoRow(
                   Icons.payments,
                   'Total Amount',
-                  '₹${order['totalAmount']}',
+                  '₹${widget.order['totalAmount']}',
                   isBold: true,
                   isPrimary: true,
                 ),
@@ -214,9 +260,7 @@ class OrderDetails extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement reorder functionality
-                  },
+                  onPressed: isLoading ? null : _reorder,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorPalette.primaryColor,
                     padding: EdgeInsets.symmetric(vertical: 16),
@@ -224,14 +268,23 @@ class OrderDetails extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text(
-                    'Reorder',
-                    style: TextStyle(
-                      color: ColorPalette.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
+                  child: isLoading
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          'Reorder',
+                          style: TextStyle(
+                            color: ColorPalette.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
               ),
             ),

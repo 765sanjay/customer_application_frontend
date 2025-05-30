@@ -3,6 +3,8 @@ import '../repository/color_palete/color_palete.dart';
 import 'package:sklyit/flash/repository/widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:sklyit/flash/repository/providers/cart_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MarketProductPage extends StatefulWidget {
   final Map<String, dynamic> shop;
@@ -20,136 +22,93 @@ class _MarketProductPageState extends State<MarketProductPage> {
   final TextEditingController _searchController = TextEditingController();
   String? selectedCategory;
   List<Map<String, dynamic>> filteredProducts = [];
+  List<Map<String, dynamic>> productCategories = [];
   bool isSearching = false;
-
-  // Sample product categories for the shop
-  final List<Map<String, dynamic>> productCategories = [
-    {
-      'name': 'Fruits & Vegetables',
-      'icon': Icons.food_bank_outlined,
-      'products': [
-        {
-          'name': 'Fresh Fruits',
-          'brand': 'Farm Fresh',
-          'price': '₹299/kg',
-          'originalPrice': '₹350/kg',
-          'discount': '15% OFF',
-          'rating': 4.5,
-          'reviews': 128,
-          'image': 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-        {
-          'name': 'Vegetables Pack',
-          'brand': 'Organic Farms',
-          'price': '₹199/kg',
-          'originalPrice': '₹250/kg',
-          'discount': '20% OFF',
-          'rating': 4.2,
-          'reviews': 95,
-          'image': 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-      ]
-    },
-    {
-      'name': 'Dairy & Bakery',
-      'icon': Icons.bakery_dining,
-      'products': [
-        {
-          'name': 'Fresh Bread',
-          'brand': 'Bakery Fresh',
-          'price': '₹99/pack',
-          'originalPrice': '₹120/pack',
-          'discount': '18% OFF',
-          'rating': 4.7,
-          'reviews': 342,
-          'image': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-        {
-          'name': 'Milk 1L',
-          'brand': 'Amul',
-          'price': '₹60/liter',
-          'originalPrice': '₹65/liter',
-          'discount': '8% OFF',
-          'rating': 4.6,
-          'reviews': 215,
-          'image': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-      ]
-    },
-    {
-      'name': 'Beverages',
-      'icon': Icons.local_drink_outlined,
-      'products': [
-        {
-          'name': 'Soft Drinks',
-          'brand': 'Coca Cola',
-          'price': '₹60/pack',
-          'originalPrice': '₹75/pack',
-          'discount': '20% OFF',
-          'rating': 4.3,
-          'reviews': 156,
-          'image': 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-        {
-          'name': 'Energy Drinks',
-          'brand': 'Red Bull',
-          'price': '₹120/pack',
-          'originalPrice': '₹150/pack',
-          'discount': '20% OFF',
-          'rating': 4.4,
-          'reviews': 189,
-          'image': 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-      ]
-    },
-    {
-      'name': 'Snacks',
-      'icon': Icons.cookie_outlined,
-      'products': [
-        {
-          'name': 'Potato Chips',
-          'brand': 'Lay\'s',
-          'price': '₹20/pack',
-          'originalPrice': '₹25/pack',
-          'discount': '20% OFF',
-          'rating': 4.5,
-          'reviews': 423,
-          'image': 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-        {
-          'name': 'Chocolate Bar',
-          'brand': 'Cadbury',
-          'price': '₹50/pack',
-          'originalPrice': '₹60/pack',
-          'discount': '17% OFF',
-          'rating': 4.6,
-          'reviews': 287,
-          'image': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500',
-          'delivery': 'Today by 8 PM'
-        },
-      ]
-    },
-  ];
+  bool isLoading = true;
+  String? error;
 
   @override
   void initState() {
     super.initState();
-    selectedCategory = productCategories[0]['name'];
-    _updateFilteredProducts();
+    _loadCategoriesAndProducts();
+  }
+
+  Future<void> _loadCategoriesAndProducts() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/flash/business/${widget.shop['id']}/products'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        
+        // Group products by category
+        final Map<String, List<Map<String, dynamic>>> categoryMap = {};
+        
+        for (var product in data) {
+          final category = product['category'] as String;
+          if (!categoryMap.containsKey(category)) {
+            categoryMap[category] = [];
+          }
+          categoryMap[category]!.add(Map<String, dynamic>.from(product));
+        }
+
+        // Convert to the required format
+        final List<Map<String, dynamic>> categories = categoryMap.entries.map((entry) {
+          return {
+            'name': entry.key,
+            'icon': _getCategoryIcon(entry.key),
+            'products': entry.value,
+          };
+        }).toList();
+
+        setState(() {
+          productCategories = categories;
+          if (productCategories.isNotEmpty) {
+            selectedCategory = productCategories[0]['name'];
+            _updateFilteredProducts();
+          }
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          error = 'Failed to load products';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = 'Error loading products: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'fruits & vegetables':
+        return Icons.food_bank_outlined;
+      case 'dairy & bakery':
+        return Icons.bakery_dining;
+      case 'beverages':
+        return Icons.local_drink_outlined;
+      case 'snacks':
+        return Icons.cookie_outlined;
+      default:
+        return Icons.category_outlined;
+    }
   }
 
   void _updateFilteredProducts() {
     if (selectedCategory == null) return;
 
     final category = productCategories.firstWhere(
-          (cat) => cat['name'] == selectedCategory,
+      (cat) => cat['name'] == selectedCategory,
       orElse: () => {'products': []},
     );
 
@@ -454,6 +413,7 @@ class _MarketProductPageState extends State<MarketProductPage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -512,165 +472,211 @@ class _MarketProductPageState extends State<MarketProductPage> {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          // Shop Info Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    widget.shop['image'] as String? ?? 'https://via.placeholder.com/80',
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 80,
-                        height: 80,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.store, size: 40, color: Colors.grey),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: ColorPalette.primaryColor,
+              ),
+            )
+          : error != null
+              ? Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red[400],
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Error Loading Products',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        error!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadCategoriesAndProducts,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorPalette.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    // Shop Info Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: Colors.white,
+                      child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              widget.shop['image'] as String? ?? 'https://via.placeholder.com/80',
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.store, size: 40, color: Colors.grey),
+                                );
+                              },
                             ),
-                            decoration: BoxDecoration(
-                              color: ColorPalette.primaryColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  (widget.shop['rating'] ?? 0.0).toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: ColorPalette.primaryColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.star,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            (widget.shop['rating'] ?? 0.0).toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+                    ),
 
-          // Main Content
-          Expanded(
-            child: Row(
-              children: [
-                // Categories List
-                Container(
-                  width: 90,
-                  color: Colors.grey[50],
-                  child: ListView.builder(
-                    itemCount: productCategories.length,
-                    itemBuilder: (context, index) {
-                      final category = productCategories[index];
-                      final isSelected = category['name'] == selectedCategory;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedCategory = category['name'] as String;
-                            _updateFilteredProducts();
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.white : Colors.transparent,
-                            border: Border(
-                              left: BorderSide(
-                                color: isSelected
-                                    ? ColorPalette.primaryColor
-                                    : Colors.transparent,
-                                width: 4,
-                              ),
+                    // Main Content
+                    Expanded(
+                      child: Row(
+                        children: [
+                          // Categories List
+                          Container(
+                            width: 90,
+                            color: Colors.grey[50],
+                            child: ListView.builder(
+                              itemCount: productCategories.length,
+                              itemBuilder: (context, index) {
+                                final category = productCategories[index];
+                                final isSelected = category['name'] == selectedCategory;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedCategory = category['name'] as String;
+                                      _updateFilteredProducts();
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Colors.white : Colors.transparent,
+                                      border: Border(
+                                        left: BorderSide(
+                                          color: isSelected
+                                              ? ColorPalette.primaryColor
+                                              : Colors.transparent,
+                                          width: 4,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          category['icon'] as IconData,
+                                          color: isSelected
+                                              ? ColorPalette.primaryColor
+                                              : ColorPalette.grey,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          category['name'] as String,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? ColorPalette.primaryColor
+                                                : ColorPalette.grey,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                            fontSize: 12,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                category['icon'] as IconData,
-                                color: isSelected
-                                    ? ColorPalette.primaryColor
-                                    : ColorPalette.grey,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                category['name'] as String,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? ColorPalette.primaryColor
-                                      : ColorPalette.grey,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 12,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
 
-                // Products Grid
-                Expanded(
-                  child: filteredProducts.isEmpty
-                      ? const Center(child: Text('No products found'))
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.58,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
+                          // Products Grid
+                          Expanded(
+                            child: filteredProducts.isEmpty
+                                ? const Center(child: Text('No products found'))
+                                : GridView.builder(
+                                    padding: const EdgeInsets.all(16),
+                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 0.58,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                    ),
+                                    itemCount: filteredProducts.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildProductCard(filteredProducts[index]);
+                                    },
+                                  ),
                           ),
-                          itemCount: filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            return _buildProductCard(filteredProducts[index]);
-                          },
-                        ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

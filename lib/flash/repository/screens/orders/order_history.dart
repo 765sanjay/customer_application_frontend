@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sklyit/flash/repository/color_palete/color_palete.dart';
 import 'package:sklyit/flash/repository/screens/home/homescreen.dart';
 import 'package:sklyit/flash/repository/screens/orders/order_details.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class OrderHistory extends StatefulWidget {
   const OrderHistory({Key? key}) : super(key: key);
@@ -11,51 +13,70 @@ class OrderHistory extends StatefulWidget {
 }
 
 class _OrderHistoryState extends State<OrderHistory> {
-  // Sample order data
-  final List<Map<String, dynamic>> orders = [
-    {
-      'orderId': 'ORD123456',
-      'date': '2024-03-15',
-      'status': 'Delivered',
-      'items': [
-        {'name': 'Fresh Fruits', 'quantity': 2, 'price': 299},
-        {'name': 'Vegetables Pack', 'quantity': 1, 'price': 199},
-      ],
-      'totalAmount': 797,
-      'deliveryAddress': '123 Main Street, City',
-      'paymentMethod': 'Credit Card',
-      'deliveryTime': '15-20 min',
-      'deliveryPartner': 'John Doe',
-      'deliveryPartnerPhone': '+91 98765 43210',
-      'orderPlacedAt': '2024-03-15 14:30',
-      'deliveredAt': '2024-03-15 14:45',
-      'subtotal': 797,
-      'deliveryFee': 40,
-      'discount': 0,
-      'tax': 40,
-    },
-    {
-      'orderId': 'ORD123455',
-      'date': '2024-03-14',
-      'status': 'Processing',
-      'items': [
-        {'name': 'Organic Milk', 'quantity': 1, 'price': 89},
-        {'name': 'Whole Wheat Bread', 'quantity': 2, 'price': 45},
-      ],
-      'totalAmount': 179,
-      'deliveryAddress': '123 Main Street, City',
-      'paymentMethod': 'UPI',
-      'deliveryTime': '20-25 min',
-      'deliveryPartner': 'Jane Smith',
-      'deliveryPartnerPhone': '+91 98765 43211',
-      'orderPlacedAt': '2024-03-14 10:15',
-      'deliveredAt': null,
-      'subtotal': 179,
-      'deliveryFee': 30,
-      'discount': 0,
-      'tax': 18,
-    },
-  ];
+  List<Map<String, dynamic>> orders = [];
+  bool isLoading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/flash/order'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          orders = data.map((order) => Map<String, dynamic>.from(order)).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          error = 'Failed to load orders';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = 'Error loading orders: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>?> _fetchOrderDetails(String orderId) async {
+    print('Fetching order details for orderId: $orderId'); // Debug print
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/flash/order/$orderId'),
+      );
+
+      print('Response status code: ${response.statusCode}'); // Debug print
+      print('Response body: ${response.body}'); // Debug print
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Decoded data: $data'); // Debug print
+        return Map<String, dynamic>.from(data);
+      } else {
+        print('Error response: ${response.body}'); // Debug print
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching order details: $e'); // Debug print
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,19 +116,105 @@ class _OrderHistoryState extends State<OrderHistory> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: ColorPalette.secondaryColor),
+            onPressed: _loadOrders,
+          ),
+        ],
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return _buildOrderCard(context, order);
-        },
-      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: ColorPalette.primaryColor,
+              ),
+            )
+          : error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red[400],
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Error Loading Orders',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        error!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadOrders,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorPalette.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : orders.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No Orders Yet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[800],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Your order history will appear here',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadOrders,
+                      child: ListView.builder(
+                        padding: EdgeInsets.all(16),
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          final order = orders[index];
+                          return _buildOrderCard(context, order);
+                        },
+                      ),
+                    ),
     );
   }
 
   Widget _buildOrderCard(BuildContext context, Map<String, dynamic> order) {
+    print('Building order card for order: $order'); // Debug print
     return Card(
       margin: EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
@@ -157,7 +264,7 @@ class _OrderHistoryState extends State<OrderHistory> {
 
             // Order date
             Text(
-              'Date: ${order['date']}',
+              'Date: ${order['orderPlacedAt']}',
               style: TextStyle(
                 color: ColorPalette.secondaryColor.withOpacity(0.6),
                 fontSize: 14,
@@ -169,7 +276,7 @@ class _OrderHistoryState extends State<OrderHistory> {
             SizedBox(height: 8),
 
             // Order items
-            ...order['items'].map<Widget>((item) => Padding(
+            ...(order['items'] as List).map<Widget>((item) => Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,7 +331,30 @@ class _OrderHistoryState extends State<OrderHistory> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _navigateToOrderDetails(context, order),
+                onPressed: () {
+                  print('View Details button pressed for order: ${order['orderId']}'); // Debug print
+                  _fetchOrderDetails(order['orderId']).then((orderDetails) {
+                    print('Fetched order details: $orderDetails'); // Debug print
+                    if (orderDetails != null) {
+                      _navigateToOrderDetails(context, orderDetails);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to load order details'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }).catchError((error) {
+                    print('Error in button press handler: $error'); // Debug print
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: $error'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  });
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorPalette.white,
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -256,6 +386,7 @@ class _OrderHistoryState extends State<OrderHistory> {
   }
 
   void _navigateToOrderDetails(BuildContext context, Map<String, dynamic> order) {
+    print('Navigating to order details with data: $order'); // Debug print
     Navigator.push(
       context,
       MaterialPageRoute(

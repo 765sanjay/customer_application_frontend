@@ -10,6 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:sklyit/flash/repository/providers/toggle_provider.dart';
 import 'package:sklyit/flash/repository/color_palete/color_palete.dart';
 import 'package:sklyit/pages/home_page.dart';
+import 'package:sklyit/flash/repository/screens/orders/order_details.dart';
+import 'package:sklyit/flash/repository/screens/orders/order_history.dart';
+
 
 class BottomNavScreen extends StatefulWidget {
   final int initialIndex;
@@ -63,7 +66,7 @@ class _BottomNavScreenState extends State<BottomNavScreen>
           toggleProvider.isSklyFlashSelected ? HomeScreen() : MarkatHome(),
           toggleProvider.isSklyFlashSelected ? CategoryScreen(businessId: '',) : MarketCategoryPage(),
           CartScreen(),
-          OrderHistoryPage(),
+          OrderDetails(order: {},),
         ];
 
         return Scaffold(

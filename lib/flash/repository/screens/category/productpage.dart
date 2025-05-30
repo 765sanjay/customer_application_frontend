@@ -41,6 +41,7 @@ class _ProductsPageState extends State<ProductsPage> {
   List<Map<String, dynamic>> _products = [];
   bool _isLoading = true;
   String? _error;
+  String? _selectedSubcategory;
 
   @override
   void initState() {
@@ -55,21 +56,27 @@ class _ProductsPageState extends State<ProductsPage> {
     });
 
     try {
-      // Use default coordinates if not provided
       final lat = widget.latitude;
       final lon = widget.longitude;
       
       if (lat == null || lon == null) {
-        setState(() {
+    setState(() {
           _error = 'Location coordinates are required';
           _isLoading = false;
         });
         return;
       }
 
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/flash/nearby/products?lat=$lat&lon=$lon&businessId=${widget.businessId}&category=${widget.category}'),
-      );
+      // Build the API URL with query parameters
+      final queryParams = {
+        'category': widget.category,
+        if (_selectedSubcategory != null) 'subcategory': _selectedSubcategory!,
+      };
+
+      final uri = Uri.parse('http://localhost:3000/flash/business/${widget.businessId}/products')
+          .replace(queryParameters: queryParams);
+
+      final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -91,80 +98,131 @@ class _ProductsPageState extends State<ProductsPage> {
     }
   }
 
+  void _onSubcategorySelected(String subcategory) {
+    setState(() {
+      _selectedSubcategory = subcategory;
+    });
+    _loadProducts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: widget.primaryColor,
+      body: Column(
+        children: [
+          // Subcategories Filter
+          if (widget.subcategories.isNotEmpty)
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.subcategories.length,
+                itemBuilder: (context, index) {
+                  final subcategory = widget.subcategories[index];
+                  final isSelected = _selectedSubcategory == subcategory;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(subcategory),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          _onSubcategorySelected(subcategory);
+                        } else if (isSelected) {
+                        setState(() {
+                            _selectedSubcategory = null;
+                          });
+                          _loadProducts();
+                        }
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: widget.primaryColor.withOpacity(0.2),
+                      labelStyle: TextStyle(
+                        color: isSelected ? widget.primaryColor : Colors.grey[600],
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  );
+                },
               ),
-            )
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Colors.red[400],
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'Error Loading Products',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[800],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        _error!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadProducts,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.primaryColor,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : _products.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No products found nearby',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+            ),
+
+          // Products Grid
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: widget.primaryColor,
+                    ),
+                  )
+                : _error != null
+                        ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                              Icons.error_outline,
+                            size: 48,
+                              color: Colors.red[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                              'Error Loading Products',
+                            style: TextStyle(
+                              fontSize: 16,
+                                color: Colors.grey[800],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                              _error!,
+                            style: TextStyle(
+                              fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadProducts,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.primaryColor,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text('Retry'),
+                          ),
+                        ],
                       ),
                     )
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.75,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
-                      itemCount: _products.length,
-                      itemBuilder: (context, index) {
-                        final product = _products[index];
-                        return _buildProductCard(product);
-                      },
-                    ),
+                    : _products.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No products found',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.75,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            itemCount: _products.length,
+                            itemBuilder: (context, index) {
+                              return _buildProductCard(_products[index]);
+                            },
+                          ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -197,13 +255,13 @@ class _ProductsPageState extends State<ProductsPage> {
                 child: Image.network(
                   product['image'] ?? 'https://via.placeholder.com/150',
                   height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                    width: double.infinity,
+                        fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       height: 120,
-                      color: Colors.grey[200],
-                      child: Icon(Icons.image, color: Colors.grey[400]),
+                              color: Colors.grey[200],
+                              child: Icon(Icons.image, color: Colors.grey[400]),
                     );
                   },
                 ),
@@ -232,18 +290,18 @@ class _ProductsPageState extends State<ProductsPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                         Text(
                           '₹${product['price']?.toString() ?? '0'}',
-                          style: TextStyle(
+                              style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: widget.primaryColor,
+                                color: widget.primaryColor,
                           ),
                         ),
-                        if (!isInCart)
+                      if (!isInCart)
                           IconButton(
                             icon: Icon(Icons.add_shopping_cart, color: widget.accentColor),
                             onPressed: () {
@@ -256,20 +314,20 @@ class _ProductsPageState extends State<ProductsPage> {
                                 isFlashProduct: true,
                               );
                             },
-                          )
-                        else
+                        )
+                      else
                           Row(
                             children: [
                               IconButton(
                                 icon: Icon(Icons.remove, color: widget.accentColor),
-                                onPressed: () {
-                                  if (quantity > 1) {
-                                    cartProvider.decreaseQuantity(productId);
-                                  } else {
-                                    cartProvider.removeItem(productId);
-                                  }
-                                },
-                              ),
+                                  onPressed: () {
+                                    if (quantity > 1) {
+                                      cartProvider.decreaseQuantity(productId);
+                                    } else {
+                                      cartProvider.removeItem(productId);
+                                    }
+                                  },
+                                ),
                               Text(
                                 '$quantity',
                                 style: TextStyle(
@@ -279,12 +337,12 @@ class _ProductsPageState extends State<ProductsPage> {
                               ),
                               IconButton(
                                 icon: Icon(Icons.add, color: widget.accentColor),
-                                onPressed: () => cartProvider.increaseQuantity(productId),
+                                  onPressed: () => cartProvider.increaseQuantity(productId),
                               ),
                             ],
                           ),
-                      ],
-                    ),
+                    ],
+                  ),
                   ],
                 ),
               ),
