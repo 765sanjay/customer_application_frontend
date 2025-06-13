@@ -66,7 +66,7 @@ class _BottomNavScreenState extends State<BottomNavScreen>
           toggleProvider.isSklyFlashSelected ? HomeScreen() : MarkatHome(),
           toggleProvider.isSklyFlashSelected ? CategoryScreen(businessId: '',) : MarketCategoryPage(),
           CartScreen(),
-          OrderDetails(order: {},),
+          OrderHistory(),
         ];
 
         return Scaffold(
@@ -120,13 +120,11 @@ class _BottomNavScreenState extends State<BottomNavScreen>
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            Navigator.pushAndRemoveUntil(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => const MyHomePage(),
-                settings: RouteSettings(arguments: 2),
               ),
-              (route) => false,
             );
           },
           borderRadius: BorderRadius.circular(24),

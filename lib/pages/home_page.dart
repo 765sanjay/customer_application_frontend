@@ -103,7 +103,15 @@ class _MyHomePageState extends State<MyHomePage> {
               MaterialPageRoute(
                 builder: (context) => flash.MyApp(),
               ),
-            );
+            ).then((_) {
+              // Restore the previous index and theme when returning from flash app
+              if (mounted) {
+                setState(() {
+                  currentPageIndex = 2; // Home index
+                  currentBody = pages.elementAt(currentPageIndex);
+                });
+              }
+            });
           } else {
             setState(() {
               currentPageIndex = index;

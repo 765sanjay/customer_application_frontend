@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sklyit/flash/repository/color_palete/color_palete.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class OrderDetails extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -14,18 +12,15 @@ class OrderDetails extends StatefulWidget {
 
 class _OrderDetailsState extends State<OrderDetails> {
   bool isLoading = false;
-  String? error;
 
   Future<void> _reorder() async {
     setState(() {
       isLoading = true;
-      error = null;
     });
 
     try {
-      // TODO: Implement reorder functionality
-      // This would typically involve creating a new order with the same items
-      await Future.delayed(Duration(seconds: 1)); // Simulated delay
+      // Simulate reorder process
+      await Future.delayed(Duration(seconds: 1));
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -36,9 +31,6 @@ class _OrderDetailsState extends State<OrderDetails> {
       
       Navigator.pop(context); // Return to order history
     } catch (e) {
-      setState(() {
-        error = 'Failed to reorder: $e';
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to place order'),

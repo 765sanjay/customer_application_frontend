@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sklyit/flash/repository/color_palete/color_palete.dart';
 import 'package:sklyit/flash/repository/screens/home/homescreen.dart';
 import 'package:sklyit/flash/repository/screens/orders/order_details.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:sklyit/flash/repository/screens/bottomnav/bottomnavscreen.dart';
 
 class OrderHistory extends StatefulWidget {
   const OrderHistory({Key? key}) : super(key: key);
@@ -30,22 +29,51 @@ class _OrderHistoryState extends State<OrderHistory> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/flash/order'),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          orders = data.map((order) => Map<String, dynamic>.from(order)).toList();
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          error = 'Failed to load orders';
-          isLoading = false;
-        });
-      }
+      // Mock data for demonstration
+      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+      setState(() {
+        orders = [
+          {
+            'orderId': 'ORD001',
+            'status': 'Delivered',
+            'orderPlacedAt': '2024-03-15',
+            'items': [
+              {'name': 'Fresh Fruits', 'quantity': 2, 'price': 299},
+              {'name': 'Vegetables Pack', 'quantity': 1, 'price': 199},
+            ],
+            'totalAmount': 797,
+            'deliveryAddress': '123 Main Street, City',
+            'deliveryTime': '2:00 PM - 3:00 PM',
+            'deliveryPartner': 'John Doe',
+            'deliveryPartnerPhone': '+91 9876543210',
+            'paymentMethod': 'Credit Card',
+            'subtotal': 697,
+            'deliveryFee': 50,
+            'discount': 0,
+            'tax': 50,
+          },
+          {
+            'orderId': 'ORD002',
+            'status': 'Processing',
+            'orderPlacedAt': '2024-03-14',
+            'items': [
+              {'name': 'Fresh Bread', 'quantity': 1, 'price': 99},
+              {'name': 'Milk 1L', 'quantity': 2, 'price': 60},
+            ],
+            'totalAmount': 219,
+            'deliveryAddress': '456 Park Avenue, City',
+            'deliveryTime': '3:00 PM - 4:00 PM',
+            'deliveryPartner': 'Jane Smith',
+            'deliveryPartnerPhone': '+91 9876543211',
+            'paymentMethod': 'UPI',
+            'subtotal': 219,
+            'deliveryFee': 40,
+            'discount': 20,
+            'tax': 20,
+          },
+        ];
+        isLoading = false;
+      });
     } catch (e) {
       setState(() {
         error = 'Error loading orders: $e';
@@ -55,25 +83,13 @@ class _OrderHistoryState extends State<OrderHistory> {
   }
 
   Future<Map<String, dynamic>?> _fetchOrderDetails(String orderId) async {
-    print('Fetching order details for orderId: $orderId'); // Debug print
+    // Mock data for demonstration
+    await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/flash/order/$orderId'),
+      return orders.firstWhere(
+        (order) => order['orderId'] == orderId,
       );
-
-      print('Response status code: ${response.statusCode}'); // Debug print
-      print('Response body: ${response.body}'); // Debug print
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('Decoded data: $data'); // Debug print
-        return Map<String, dynamic>.from(data);
-      } else {
-        print('Error response: ${response.body}'); // Debug print
-        return null;
-      }
     } catch (e) {
-      print('Error fetching order details: $e'); // Debug print
       return null;
     }
   }
@@ -214,7 +230,6 @@ class _OrderHistoryState extends State<OrderHistory> {
   }
 
   Widget _buildOrderCard(BuildContext context, Map<String, dynamic> order) {
-    print('Building order card for order: $order'); // Debug print
     return Card(
       margin: EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
@@ -332,28 +347,7 @@ class _OrderHistoryState extends State<OrderHistory> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  print('View Details button pressed for order: ${order['orderId']}'); // Debug print
-                  _fetchOrderDetails(order['orderId']).then((orderDetails) {
-                    print('Fetched order details: $orderDetails'); // Debug print
-                    if (orderDetails != null) {
-                      _navigateToOrderDetails(context, orderDetails);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to load order details'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }).catchError((error) {
-                    print('Error in button press handler: $error'); // Debug print
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: $error'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  });
+                  _navigateToOrderDetails(context, order);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorPalette.white,
@@ -381,12 +375,13 @@ class _OrderHistoryState extends State<OrderHistory> {
   void _navigateToHomeScreen(BuildContext context) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
+      MaterialPageRoute(
+        builder: (context) => BottomNavScreen(initialIndex: 0),
+      ),
     );
   }
 
   void _navigateToOrderDetails(BuildContext context, Map<String, dynamic> order) {
-    print('Navigating to order details with data: $order'); // Debug print
     Navigator.push(
       context,
       MaterialPageRoute(

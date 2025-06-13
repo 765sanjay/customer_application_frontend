@@ -871,11 +871,18 @@ class _MarketCategoryPageState extends State<MarketCategoryPage> {
                       final shop = getFilteredShops()[index];
                       return GestureDetector(
                         onTap: () {
+                          // Get the shop's category
+                          final shopCategory = selectedCategory ?? 'Grocery & Supermarkets';
+                          
+                          // Create a new shop map with the category type
+                          final shopWithType = Map<String, dynamic>.from(shop);
+                          shopWithType['type'] = shopCategory;
+                          
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => MarketProductPage(
-                                shop: shop,
+                                shop: shopWithType,
                               ),
                             ),
                           );

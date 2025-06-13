@@ -19,9 +19,36 @@ class _MarkatHomeState extends State<MarkatHome> {
   final Color darkAccent = Color(0xFF006B7C);      // Dark teal
   final Color lightAccent = Color(0xFFFDD90D);     // Bright yellow
 
-  List<Map<String, dynamic>> localShops = [];
-  bool isLoading = true;
-  String errorMessage = '';
+  // Sample local shops data
+  final List<Map<String, dynamic>> localShops = [
+    {
+      'name': 'Fresh Grocery Store',
+      'rating': 4.5,
+      'distance': '0.5 km',
+      'image': 'assets/images/shop1.png',
+      'category': 'Grocery',
+      'openTime': '8:00 AM',
+      'closeTime': '10:00 PM'
+    },
+    {
+      'name': 'Daily Needs Mart',
+      'rating': 4.2,
+      'distance': '0.8 km',
+      'image': 'assets/images/shop2.png',
+      'category': 'General Store',
+      'openTime': '7:00 AM',
+      'closeTime': '9:00 PM'
+    },
+    {
+      'name': 'Organic Corner',
+      'rating': 4.7,
+      'distance': '1.2 km',
+      'image': 'assets/images/shop3.png',
+      'category': 'Organic Store',
+      'openTime': '9:00 AM',
+      'closeTime': '8:00 PM'
+    },
+  ];
 
   // Sample today's offers
   final List<Map<String, dynamic>> todaysOffers = [
@@ -38,43 +65,6 @@ class _MarkatHomeState extends State<MarkatHome> {
       'image': 'assets/images/offer2.png',
     },
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchNearbyBusinesses();
-  }
-
-  Future<void> _fetchNearbyBusinesses() async {
-    try {
-      // For demo purposes, using fixed coordinates
-      // In a real app, you would get these from the device's GPS
-      final lat = 12.950;
-      final lon = 80.1412;
-
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/flash/nearby/business?lat=$lat&lon=$lon'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          localShops = List<Map<String, dynamic>>.from(data['businesses']);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-          errorMessage = 'Failed to load businesses: ${response.statusCode}';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        errorMessage = 'Error fetching data: $e';
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,28 +126,15 @@ class _MarkatHomeState extends State<MarkatHome> {
                           ),
                         ),
                         SizedBox(height: 16),
-
-                        if (isLoading)
-                          Center(child: CircularProgressIndicator()),
-
-                        if (errorMessage.isNotEmpty)
-                          Center(
-                            child: Text(
-                              errorMessage,
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-
-                        if (!isLoading && errorMessage.isEmpty)
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: localShops.length,
-                            itemBuilder: (context, index) {
-                              final shop = localShops[index];
-                              return _buildShopCard(shop);
-                            },
-                          ),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: localShops.length,
+                          itemBuilder: (context, index) {
+                            final shop = localShops[index];
+                            return _buildShopCard(shop);
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -242,7 +219,7 @@ class _MarkatHomeState extends State<MarkatHome> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
-                  image: NetworkImage(shop['image'] ?? 'https://via.placeholder.com/80'),
+                  image: AssetImage(shop['image']),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -254,7 +231,7 @@ class _MarkatHomeState extends State<MarkatHome> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    shop['name'] ?? 'Unknown Shop',
+                    shop['name'],
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -266,7 +243,7 @@ class _MarkatHomeState extends State<MarkatHome> {
                       Icon(Icons.star, color: accentColor, size: 16),
                       SizedBox(width: 4),
                       Text(
-                        (shop['rating'] ?? 0).toString(),
+                        shop['rating'].toString(),
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 14,
@@ -276,7 +253,7 @@ class _MarkatHomeState extends State<MarkatHome> {
                       Icon(Icons.location_on, color: Colors.grey[600], size: 16),
                       SizedBox(width: 4),
                       Text(
-                        '${shop['distance'] ?? 'N/A'} km',
+                        shop['distance'],
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 14,
@@ -286,7 +263,7 @@ class _MarkatHomeState extends State<MarkatHome> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    '${shop['category'] ?? 'General'} • ${shop['openTime'] ?? 'N/A'} - ${shop['closeTime'] ?? 'N/A'}',
+                    '${shop['category']} • ${shop['openTime']} - ${shop['closeTime']}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,
@@ -306,9 +283,9 @@ class _MarkatHomeState extends State<MarkatHome> {
                         'name': shop['name'],
                         'image': shop['image'],
                         'rating': shop['rating'],
-                        'deliveryTime': shop['deliveryTime'] ?? '15-20 min',
-                        'minOrder': shop['minOrder'] ?? '₹100',
-                        'deliveryFee': shop['deliveryFee'] ?? '₹30',
+                        'deliveryTime': '15-20 min',
+                        'minOrder': '₹100',
+                        'deliveryFee': '₹30',
                       },
                     ),
                   ),

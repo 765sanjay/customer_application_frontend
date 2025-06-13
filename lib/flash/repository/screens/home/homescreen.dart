@@ -41,16 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   var grocerykitchen = [
-    {"img": "image 41.png", "text": "Vegetables & \nFruits", "color": Color(0xFFF6C445)},
-    {"img": "image 42.png", "text": "Atta, Dal & \nRice", "color": Color(0xFF009085)},
-    {"img": "image 43.png", "text": "Oil, Ghee & \nMasala", "color": Color(0xFF2F4858)},
-    {"img": "image 44.png", "text": "Dairy, Bread & \nMilk", "color": Color(0xFF006B7C)},
-    {"img": "image 45.png", "text": "Biscuits & \nBakery", "color": Color(0xFFFDD90D)}
+    {"img": "image 41.png", "text": "Fruits & \nVegetables", "color": Color(0xFFF6C445)},
+    {"img": "image 42.png", "text": "Atta, Rice, \nOil & Dals", "color": Color(0xFF009085)},
+    {"img": "image 43.png", "text": "Masala & \nDry Fruits", "color": Color(0xFF2F4858)},
+    {"img": "image 44.png", "text": "Dairy, Bread & \nEggs", "color": Color(0xFF006B7C)},
+    {"img": "image 45.png", "text": "Biscuits & \nCookies", "color": Color(0xFFFDD90D)}
   ];
-
-  get defaultLatitude => null;
-
-  get defaultLongitude => null;
 
   @override
   void dispose() {
@@ -431,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
           secondaryColor: secondaryColor,
           accentColor: accentColor,
           darkAccent: darkAccent,
-          lightAccent: lightAccent, subcategories: [], businessId: '', latitude: defaultLatitude, longitude: defaultLongitude,
+          lightAccent: lightAccent, subcategories: [],
         ),
       ),
     );

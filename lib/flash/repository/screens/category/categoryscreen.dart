@@ -460,11 +460,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           secondaryColor: secondaryColor,
           accentColor: accentColor,
           darkAccent: darkAccent,
-          lightAccent: lightAccent,
-          subcategories: [],
-          businessId: widget.businessId,
-          latitude: defaultLatitude,
-          longitude: defaultLongitude,
+          lightAccent: lightAccent, subcategories: [],
         ),
       ),
     );
